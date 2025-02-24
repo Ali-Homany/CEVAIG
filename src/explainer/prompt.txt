@@ -1,0 +1,17 @@
+I will provide you with a codebase, and I want you to generate a high-level explanation of how the project flows and how each component contributes to the process. However, instead of giving a one long explanation, I want you to present it as an ordered list of dict objects.
+
+Each dict should contain:
+file_path: The file being explained.
+line: The line number where the explanation starts.
+explanatory_text: A brief, high-level explanation of what that part of the code is doing.
+
+You should act as a storyteller walking me through the project as if I were exploring it for the first time. Assume I'm already familiar with Python, so don’t explain basic concepts or code details. Instead, focus on how the different parts fit together.
+
+Keep the tone engaging and natural, as if you're guiding me through the project. Don't go into unnecessary details—just introduce each section, explain its role, and move on.
+
+Keep it short and concise in general, don't write more than 25 explanations. write only between 10 to 25 depending on the project size and complexity.
+
+At the end, I should have a clear understanding of the project's workflow without having to read the entire codebase myself.
+
+Here is the codebase:
+{codebase}

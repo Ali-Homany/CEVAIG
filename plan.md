@@ -1,14 +1,13 @@
 ## Envisioned Implementation Plan
-1. codebase -> list[dict] explanations:  
-   1.1. parsing codebase in the best way  
-   1.2. creating good prompt  
-   1.3. requesting & parsing output  
-2. explanations list[dict] -> video:  
-   2.1. explanations -> audio files (TTS)  
-   2.2. audios -> durations + timestamps  
-   2.3. explanation -> file screenshot with highlight (maybe an html/css page with code needed then convert to img)  
-   2.4. screenshot + duration + audio -> video clip (moviepy)  
-   2.5. timestamps + videos clips -> one full video  
+~~1. codebase -> list[dict] explanations:~~  
+   ~~1.1. parsing codebase in the best way~~  
+   ~~1.2. creating good prompt~~  
+   ~~1.3. requesting & parsing output~~  
+~~2. explanations list[dict] -> video:~~  
+   ~~2.1. explanations -> audio files (TTS)~~  
+   ~~2.2. explanation -> file screenshot with highlight~~  
+   ~~2.3. screenshot + duration + audio -> video clip (moviepy)~~  
+   ~~2.4. merge video clips~~  
 
 
 ## Time Expectations
@@ -25,3 +24,9 @@
 TOTAL (avg): 22 HRS
 
 Time Buffer: 20% = 5 hrs
+
+## Progress
+Initial Version includes the whole process but basic quality, it just works. So we still need to improve parsing the codebase, find better TTS, improve the prompt, add transition clips...
+Note that the plan was partially modified, for step 2 was simplified a bit, merging clips doesn't require timestamps or so on.
+
+The Initial Version (all commits up to this) took around 8-9 hrs.
