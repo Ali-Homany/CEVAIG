@@ -30,3 +30,5 @@ Initial Version includes the whole process but basic quality, it just works. So 
 Note that the plan was partially modified, for step 2 was simplified a bit, merging clips doesn't require timestamps or so on.
 
 The Initial Version (all commits up to this) took around 8-9 hrs.
+
+- Find & use a better TTS (kokoro) took about 1hr
