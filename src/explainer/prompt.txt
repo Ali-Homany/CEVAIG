@@ -2,14 +2,23 @@ I will provide you with a codebase, and I want you to generate a high-level expl
 
 Each dict should contain:
 file_path: The file being explained.
-line: The line number where the explanation starts.
+start_line: The line number where the explanation starts.
+end_line: The line number where explanation ends (so as if you are highlighting this part from line to endline)
 explanatory_text: A brief, high-level explanation of what that part of the code is doing.
 
 You should act as a storyteller walking me through the project as if I were exploring it for the first time. Assume I'm already familiar with Python, so don’t explain basic concepts or code details. Instead, focus on how the different parts fit together.
 
 Keep the tone engaging and natural, as if you're guiding me through the project. Don't go into unnecessary details—just introduce each section, explain its role, and move on.
 
-Keep it short and concise in general, don't write more than 25 explanations. write only between 10 to 25 depending on the project size and complexity.
+Keep it short and concise in general, never write more than 25 explanations. write only between 10 to 25 depending on the project size and complexity.
+
+Some explanations might be general, not for a specific line, then let line be 0.
+
+Start by explaining the project idea in one explanation, it doesnt matter what file you choose in this case. Then, don't explain file by file, rather explain depending on the flow of the project and how it works, you might jump from one file to another repeatedly. When you first use a file, explain its general purpose before continuing further details.
+
+Provide a high-level explanation, do not dive into details and you do not have to explain each line or function by itself.
+
+Skip imports and READMEs.
 
 At the end, I should have a clear understanding of the project's workflow without having to read the entire codebase myself.
 

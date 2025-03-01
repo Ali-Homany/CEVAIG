@@ -27,7 +27,7 @@ def get_carbon_script(
         highlight_num_lines: int=None,
         font_name: str='Space Mono',
         style_name: str='dracula',
-        max_lines: int=50
+        starting_line: int=1,
     ) -> str:
     num_lines = len(code.split('\n'))
     with open(CARBON_PRESET_PATH, 'r') as f:
@@ -36,16 +36,15 @@ def get_carbon_script(
     preset['latest-preset']['theme'] = style_name
     if highlight_start:
         preset['latest-preset']['selectedLines'] = ','.join(
-            map(str, list(range(highlight_start, highlight_start + highlight_num_lines)))
+            map(str, list(range(highlight_start, min(highlight_start + highlight_num_lines, num_lines))))
         )
+    else:
+        preset['latest-preset']['selectedLines'] = '*'
     preset['latest-preset']['lineNumbers'] = "true"
-    preset['latest-preset']['firstLineNumber'] = max(highlight_start - max_lines // 2, 1) if highlight_start else 1
+    preset['latest-preset']['firstLineNumber'] = starting_line
     with open(CARBON_PRESET_PATH, 'w') as f:
         json.dump(preset, f, indent=4)
-    return SCRIPT_TEMPLATE.format(
-        file_path=file_path,
-        preset_path=os.path.abspath(CARBON_PRESET_PATH)
-    )
+    return SCRIPT_TEMPLATE.format(file_path=file_path)
 
 
 def create_temp_file(content, suffix: str) -> str:
@@ -72,10 +71,24 @@ def create_screenshot(
         highlight_num_lines: int=1,
         font_name: str='Space Mono',
         style_name: str='dracula',
-        max_lines: int=50
+        max_lines: int=40
     ) -> Image.Image:
+    num_lines = len(code.split('\n'))
+    if num_lines > max_lines:
+        if not highlight_start:
+            code = '\n'.join(code.split('\n')[:max_lines])
+            starting_line = 1
+        else:
+            num_lines_around = (max_lines - highlight_num_lines) // 2
+            starting_line = max(highlight_start - num_lines_around, 1)
+            ending_line = min(highlight_start + highlight_num_lines + 1 + num_lines_around, num_lines)
+            code = '\n'.join(code.split('\n')[starting_line:ending_line])
+            highlight_start -= starting_line
+            highlight_num_lines = min(highlight_num_lines, ending_line - highlight_start)
     # save code to temporary file
     file_path = f'{TEMP_DIR}/{file_rel_path}' if file_rel_path else f'{TEMP_DIR}/code'
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
     with open(file_path, 'w') as f:
         f.write(code)
         f.flush()
@@ -83,12 +96,12 @@ def create_screenshot(
     script = get_carbon_script(
         code, file_path,
         highlight_start, highlight_num_lines,
-        font_name, style_name, max_lines
+        font_name, style_name, starting_line
     )
     # save script to batch temp file
     script_path = create_temp_file(script, suffix='.bat')
     # run script
-    subprocess.run(script_path)
+    subprocess.run(script_path, check=True)
     # get screenshot path
     screenshot_path = max([f for f in os.listdir('./') if f.endswith('.png')], key=os.path.getmtime)
     # load screenshot

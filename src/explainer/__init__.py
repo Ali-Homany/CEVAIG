@@ -15,7 +15,8 @@ load_dotenv()
 
 class Explanation(BaseModel):
     file_path: str
-    line: int
+    start_line: int
+    end_line: int
     explanatory_text: str
 
 

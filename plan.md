@@ -32,3 +32,7 @@ Note that the plan was partially modified, for step 2 was simplified a bit, merg
 The Initial Version (all commits up to this) took around 8-9 hrs.
 
 - Find & use a better TTS (kokoro) took about 1hr
+- Search for best/easiest way to create beautiful screenshots, choose carbon-now-cli. Use it.
+- Improve explainer, including prompt & Explanation structure (add end_line)
+
+Version 2.0 (commits since Initial Version) took around 7-8 hrs.

@@ -22,7 +22,7 @@ def create_video(image: Image, audio_file_path: str, output_file_path: str, dura
     audio = AudioFileClip(audio_file_path)
     video = video.with_audio(audio)
     # save
-    video.write_videofile(output_file_path, codec='libx264', audio_codec='aac', fps=30)
+    video.write_videofile(output_file_path, codec='libx264', audio_codec='aac', fps=30, preset='ultrafast')
     return video
 
 

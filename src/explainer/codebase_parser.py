@@ -11,7 +11,7 @@ def read_code_file(file_path: str) -> str:
         return file.read()
 
 
-def get_codebase(dir_path: str, allowed_files: list=('py', 'html', 'css')) -> str:
+def get_codebase(dir_path: str, allowed_files: list=('py', 'html', 'css', 'md')) -> str:
     codebase = ''
     for root, _, files in os.walk(dir_path):
         for file in files:
