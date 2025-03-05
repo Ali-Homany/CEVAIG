@@ -1,12 +1,8 @@
 numpy
 soundfile
 pillow
-gtts
+kokoro
 moviepy
-pygments
 google-genai
-transformers
-torch
 SentencePiece
-datasets
 python-dotenv

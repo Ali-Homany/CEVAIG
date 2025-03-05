@@ -1,43 +1,31 @@
-import os
 import numpy as np
-from PIL import Image
-from moviepy.audio.io.AudioFileClip import AudioFileClip
-from moviepy.video.io.VideoFileClip import VideoFileClip
-from moviepy.video.VideoClip import ImageClip
 from moviepy.video.VideoClip import VideoClip
-from moviepy.video.compositing.CompositeVideoClip import concatenate_videoclips
+from moviepy.audio.AudioClip import AudioClip, AudioArrayClip
+from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
+
+
 """
 This module is responsible for any actions related to videos
 """
 
-def create_video(image: Image, audio_file_path: str, output_file_path: str, duration: int = None) -> VideoClip:
-    """
-    This method creates a video from an image and an audio file
-    """
-    # create video
-    image = np.array(image)
-    video = ImageClip(image, duration=duration or audio.duration)
-    video.fps = 30
-    # set audio
-    audio = AudioFileClip(audio_file_path)
-    video = video.with_audio(audio)
-    # save
-    video.write_videofile(output_file_path, codec='libx264', audio_codec='aac', fps=30, preset='ultrafast')
-    return video
+
+def merge_audios(audios: list[np.ndarray], sr: int, silent_separator: float=0.5) -> AudioClip:
+    # Create a silent separator (mono)
+    num_samples = int(sr * silent_separator)
+    silent_audio = np.zeros(num_samples, dtype=np.float32)
+    # Merge audios with silence in between
+    merged_audio = np.concatenate([clip for audio in audios for clip in (audio, silent_audio)])[:-num_samples]  # Remove final silence
+    # Ensure it's in the correct shape for MoviePy (2D array with shape (num_samples, 1))
+    merged_audio = merged_audio.reshape(-1, 1)
+    # Create an AudioClip from the merged audio array
+    # use 44100 coz it works :)
+    full_audio = AudioArrayClip(merged_audio, fps=44100)
+    return full_audio
 
 
-def merge_videos(*video_files: str) -> str:
-    """
-    This method merges multiple videos into a single video
-    """
-    command = 'ffmpeg -f concat -safe 0 -i videos.txt -c copy output.mp4'
-    with open('videos.txt', 'w') as f:
-        for video_file in video_files:
-            f.write(f'file {video_file}\n')
-    # run command
-    os.system(command)
-    # remove temp file
-    os.remove('videos.txt')
-    return 'output.mp4'
-    # videos = [VideoFileClip(file).resized(height=720).with_fps(30) for file in video_files]
-    # return concatenate_videoclips(videos, method='compose')
+def create_image_sequence(images: list[np.ndarray], durations: list[float]) -> ImageSequenceClip:
+    return ImageSequenceClip(sequence=images, durations=durations)
+
+
+def concat_video_audio(video: VideoClip, audio: AudioClip) -> VideoClip:
+    return video.with_audio(audio)
