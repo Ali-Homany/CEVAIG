@@ -1,0 +1,22 @@
+Your task is to annotate the explanations, add start_line and end_line attributes to the dictionaries.
+
+The original json is a list of dictionaries, where each dict should contains:
+file_path: The file being explained.
+explanatory_text: A brief, high-level explanation of what that part of the code is doing.
+
+start_line and end_line represent the code the explanation is talking about, in the file_path.
+
+start_line: The line number where the explanation starts.
+end_line: The line number where explanation ends (so as if you are highlighting this part from line to endline)
+
+Note that general explanations with no focus on a specific part of the file, have start_line and end_line set to 0.
+Note that the maximum allowed highlight is {max_highlight}
+Output the full json with the new attributes added.
+
+
+Here is the json containing explanations:
+{explanations}
+
+
+Here is the codebase the json is trying to explain:
+{codebase}
