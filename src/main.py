@@ -3,8 +3,8 @@ import json
 import random
 import asyncio
 import numpy as np
-from explainer import explain_codebase
-from screenshotter import create_screenshot
+from explainer import explain_codebase, add_highlighting
+from screenshotter import create_project_cover, create_screenshot, create_project_tree
 from tts import SpeechTextConverter, preprocess_text, save_audio_to_file
 from video_utils import (
     VideoClip,
@@ -26,40 +26,49 @@ def get_explanations(use_cache: bool=True) -> list[dict]:
             explanations = json.load(file)
     else:
         explanations = explain_codebase(test_dir)
+        explanations = add_highlighting(test_dir, explanations)
         with open(f'{temp_dir}explanations.json', 'w') as file:
-            json.dump(explanations, file)
+            json.dump(explanations, file, indent=4)
     return explanations
 
 
 def merge_all(audios: list[np.ndarray], images: list[np.ndarray], sr: int) -> VideoClip:
     full_audio = merge_audios(audios, sr=sr, silent_separator=0.5)
-    images_durations = [round(audio_np.shape[0] / sr, 1) for audio_np in audios]
+    images_durations = [(audio_np.shape[0] / sr) + 1.5 for audio_np in audios]
     images_video = create_image_sequence(images, images_durations)
     final_video = concat_video_audio(video=images_video, audio=full_audio)
     return final_video
 
 
-async def generate_images(explanations: list[dict]) -> list[np.ndarray]:
+async def generate_images(explanations: list[dict], project_title: str, project_dir: str) -> list[np.ndarray]:
     images = []
     for i, item in enumerate(explanations):
-        item['file_path'] = test_dir + item['file_path']
-        item['code'] = open(item['file_path'], 'r').read()
-        if not item['start_line'] or item['start_line'] < 2:
-            item['start_line'] = None
-        img = await asyncio.to_thread(
-            create_screenshot,
-            code=item['code'],
-            file_rel_path=os.path.relpath(item['file_path'], test_dir),
-            highlight_start=item['start_line'],
-            highlight_num_lines=(item['end_line'] - item['start_line'] + 1) if item['start_line'] else None
-        )
+        if item['file_path'] == '' or item['file_path'] is None or item['file_path'] == '0':
+            img = await asyncio.to_thread(
+                create_project_cover,
+                project_title=project_title
+            )
+        elif item['file_path'] == './':
+            img = await asyncio.to_thread(create_project_tree, project_title, project_dir)
+        else:
+            item['file_path'] = test_dir + item['file_path']
+            item['code'] = open(item['file_path'], 'r').read()
+            if not item['start_line'] or item['start_line'] < 2:
+                item['start_line'] = None
+            img = await asyncio.to_thread(
+                create_screenshot,
+                code=item['code'],
+                file_rel_path=os.path.relpath(item['file_path'], test_dir),
+                highlight_start=item['start_line'],
+                highlight_num_lines=(item['end_line'] - item['start_line'] + 1) if item['start_line'] else None
+            )
         images.append(np.array(img))
-        # img.save(f'{temp_dir}{i}.png')
+        img.save(f'{temp_dir}{i}.png')
         print(f'Created screenshot for {i}.png')
     return images
 
 
-async def generate_audios(explanations: list[dict], tts: SpeechTextConverter) -> tuple[list[np.ndarray], int]:
+async def generate_audios(explanations: list[dict], tts: SpeechTextConverter) -> tuple:
     audios = []
     for i, item in enumerate(explanations):
         # create audio
@@ -74,11 +83,12 @@ async def generate_audios(explanations: list[dict], tts: SpeechTextConverter) ->
 
 
 async def main() -> None:
+    project_title = input("Enter project title: ")
     tts = SpeechTextConverter()
-    explanations = get_explanations()
+    explanations = get_explanations(project_title)
     # Run image & audio generation concurrently
     images, (audios, sr) = await asyncio.gather(
-        generate_images(explanations),
+        generate_images(explanations, project_title, test_dir),
         generate_audios(explanations, tts),
     )
     # merge audios & images

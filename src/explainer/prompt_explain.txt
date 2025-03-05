@@ -10,7 +10,9 @@ Keep the tone engaging and natural, as if you're guiding me through the project.
 
 Keep it short and concise in general, never write more than 25 explanations. write only between 10 to 25 depending on the project size and complexity.
 
-Start by explaining the project idea in one explanation, it doesnt matter what file you choose in this case. Then, don't explain file by file, rather explain depending on the flow of the project and how it works, you might jump from one file to another repeatedly. When you first use a file, explain its general purpose before continuing further details.
+Start by explaining the project idea in one explanation, leave file_path empty in this case. Then, don't explain file by file, rather explain depending on the flow of the project and how it works, you might jump from one file to another repeatedly. When you first use a file, explain its general purpose before continuing further details.
+
+When you wanna explain the project file structrue, how the work is divided into its different components in general or how it is organize, then let file_path = './'
 
 Provide a high-level explanation, do not dive into details and you do not have to explain each line or function by itself.
 

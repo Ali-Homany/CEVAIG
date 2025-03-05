@@ -1,8 +1,13 @@
 import os
 import json
+import random
+import requests
 import tempfile
 import subprocess
-from PIL import Image
+from io import BytesIO
+from directory_tree import DisplayTree
+from PIL import Image, ImageDraw, ImageFont
+
 
 """
 This package is responsible for taking a screenshot of a code file.
@@ -21,14 +26,14 @@ pause
 
 
 def get_carbon_script(
-        code: str,
-        file_path: str,
-        highlight_start: int=None,
-        highlight_num_lines: int=None,
-        font_name: str='Space Mono',
-        style_name: str='dracula',
-        starting_line: int=1,
-    ) -> str:
+    code: str,
+    file_path: str,
+    highlight_start: int=None,
+    highlight_num_lines: int=None,
+    font_name: str='Space Mono',
+    style_name: str='One Dark',
+    starting_line: int=1,
+) -> str:
     num_lines = len(code.split('\n'))
     with open(CARBON_PRESET_PATH, 'r') as f:
         preset = json.load(f)
@@ -47,7 +52,7 @@ def get_carbon_script(
     return SCRIPT_TEMPLATE.format(file_path=file_path)
 
 
-def create_temp_file(content, suffix: str) -> str:
+def create_temp_file(content: str, suffix: str) -> str:
     content = content.strip()
     with tempfile.NamedTemporaryFile('w', delete=False, suffix=suffix) as file:
         file.write(content)
@@ -60,31 +65,69 @@ def get_image_from_path(image_path: str) -> Image.Image:
     img = Image.open(image_path)
     img.load()
     img_output = img.copy()
+    img_output = img_output.convert("RGB")
     img.close()
     return img_output
 
 
-def create_screenshot(
-        code: str,
-        file_rel_path: str=None,
-        highlight_start: int=None,
-        highlight_num_lines: int=1,
-        font_name: str='Space Mono',
-        style_name: str='dracula',
-        max_lines: int=40
-    ) -> Image.Image:
-    num_lines = len(code.split('\n'))
-    if num_lines > max_lines:
-        if not highlight_start:
-            code = '\n'.join(code.split('\n')[:max_lines])
-            starting_line = 1
+def crop_code_columns(code: str) -> str:
+    # this method formats code for screenshots
+    # make all lines the same length
+    NUM_COLUMNS = 160
+    code_lines = code.split('\n')
+    num_lines = len(code_lines)
+    for i, code_line in enumerate(code_lines):
+        # pad with spaces
+        if len(code_line) < NUM_COLUMNS:
+            code_lines[i] += ' ' * (NUM_COLUMNS - len(code_line))
+        # truncate extra long lines
         else:
-            num_lines_around = (max_lines - highlight_num_lines) // 2
-            starting_line = max(highlight_start - num_lines_around, 1)
-            ending_line = min(highlight_start + highlight_num_lines + 1 + num_lines_around, num_lines)
-            code = '\n'.join(code.split('\n')[starting_line:ending_line])
-            highlight_start -= starting_line
-            highlight_num_lines = min(highlight_num_lines, ending_line - highlight_start)
+            code_lines[i] = code_line[:NUM_COLUMNS]
+    code = '\n'.join(code_lines)
+    return code
+
+
+def crop_code_lines(
+    code: str,
+    highlight_start: int,
+    highlight_num_lines: int,
+    max_lines: int,
+) -> tuple:
+    """
+    This method crops code to a certain number of lines, determined by max_lines and highlights.
+    Return modified code, start and highlight_start
+    """
+    num_lines = len(code.split('\n'))
+    start = 0
+    end = num_lines
+    if num_lines > max_lines and highlight_start:
+        num_lines_around = (max_lines - highlight_num_lines) // 2
+        if highlight_start <= num_lines_around:
+            start = 0
+        else:
+            start = highlight_start - num_lines_around
+        end = start + max_lines
+        highlight_start -= start
+    # crop to start and end
+    if end > num_lines:
+        code_lines = code.split('\n')[start:] + ['' for _ in range(end - num_lines)]
+        code = '\n'.join(code_lines)
+    else:
+        code = '\n'.join(code.split('\n')[start:end])
+    return code, start, highlight_start
+
+
+def create_screenshot(
+    code: str,
+    file_rel_path: str=None,
+    highlight_start: int=None,
+    highlight_num_lines: int=1,
+    font_name: str='Space Mono',
+    style_name: str='One Dark',
+    max_lines: int=40
+) -> Image.Image:
+    code, start, highlight_start = crop_code_lines(code, highlight_start, highlight_num_lines, max_lines)
+    code = crop_code_columns(code)
     # save code to temporary file
     file_path = f'{TEMP_DIR}/{file_rel_path}' if file_rel_path else f'{TEMP_DIR}/code'
     if not os.path.exists(os.path.dirname(file_path)):
@@ -92,37 +135,84 @@ def create_screenshot(
     with open(file_path, 'w') as f:
         f.write(code)
         f.flush()
-    # pass parameters to script
+    # pass parameters to script & save
     script = get_carbon_script(
         code, file_path,
         highlight_start, highlight_num_lines,
-        font_name, style_name, starting_line
+        font_name, style_name, starting_line=start+1
     )
-    # save script to batch temp file
     script_path = create_temp_file(script, suffix='.bat')
     # run script
     subprocess.run(script_path, check=True)
-    # get screenshot path
-    screenshot_path = max([f for f in os.listdir('./') if f.endswith('.png')], key=os.path.getmtime)
     # load screenshot
+    screenshot_path = max([f for f in os.listdir('./') if f.endswith('.png')], key=os.path.getmtime)
     image_output = get_image_from_path(screenshot_path)
     # cleanup, remove temp files
-    os.remove(file_path)
-    os.remove(script_path)
-    os.remove(screenshot_path)
+    for file in (screenshot_path, script_path, file_path):
+        os.remove(file)
     return image_output
 
 
+def load_font(font_name: str, font_size: int) -> ImageFont.FreeTypeFont:
+    try:
+        font_url = f'https://github.com/google/fonts/raw/refs/heads/main/ofl/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}-Regular.ttf'
+        response = requests.get(font_url)
+        font = ImageFont.truetype(BytesIO(response.content), font_size)
+    except Exception as e:
+        font_url = f'https://github.com/google/fonts/raw/refs/heads/main/ofl/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}[wght].ttf'
+        response = requests.get(font_url)
+        font = ImageFont.truetype(BytesIO(response.content), font_size)
+    return font
+
+
+def create_project_cover(
+    project_title: str,
+    width: int=3524,
+    height: int=2068,
+    font_size: int=300
+) -> Image.Image:
+    # Generate random gradient colors
+    start_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    end_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    image = Image.new('RGB', (width, height), color=start_color)
+    draw = ImageDraw.Draw(image)
+    # generate gradient
+    for x in range(width):
+        r = start_color[0] + (end_color[0] - start_color[0]) * x // width
+        g = start_color[1] + (end_color[1] - start_color[1]) * x // width
+        b = start_color[2] + (end_color[2] - start_color[2]) * x // width
+        draw.line((x, 0, x, height), fill=(r, g, b))
+    # load font
+    font = load_font('Solway', font_size)
+    # get text size to center it
+    text_width, text_height = draw.textbbox((0, 0), project_title, font=font)[2:4]
+    position = ((width - text_width) // 2, (height - text_height) // 2)
+    # write text
+    draw.text(position, project_title, font=font, fill="black")
+    return image
+
+
+def create_project_tree(
+    project_title: str,
+    project_dir: str,
+    width: int=3524,
+    height: int=2068,
+) -> Image.Image:
+    image = Image.new('RGB', (width, height), color=(0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    text = DisplayTree(project_dir, stringRep=True).replace('\n', '\n\n')
+    # replace directory with project title
+    text = '\n'.join([project_title] + text.split('\n')[1:])
+    font_size = 1700 // text.count('\n') # magic ratio to make it look good
+    font = load_font('Fira Code', font_size)
+    # center text
+    text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:4]
+    position = ((width - text_width) // 2, (height - text_height) // 2)
+    draw.text(position, text, font=font, fill="white")
+    return image
+
+
 if __name__ == '__main__':
-    file_path = './testing/sample_code/nb_generator.py'
-    with open(file_path, 'r') as f:
-        code = f.read()
-    img = create_screenshot(
-        code=code,
-        highlight_start=10,
-        highlight_num_lines=3,
-        file_rel_path=file_path.split('/')[-1],
-        font_name='Space Mono',
-        style_name='dracula'
-    )
+    file_path = './testing/sample_code'
+    img = create_project_tree('My Project', os.path.abspath(file_path))
     img.show()

@@ -6,3 +6,4 @@ moviepy
 google-genai
 SentencePiece
 python-dotenv
+directory-tree
