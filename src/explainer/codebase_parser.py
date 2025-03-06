@@ -1,9 +1,14 @@
 import os
+from directory_tree import DisplayTree
 
 
 """
-This module is responsible for wrapping up the codebase for a model
+This module is responsible for parsing a codebase, mainly to wrap it for a model
 """
+
+
+def generate_codebase_tree(project_dir: str) -> str:
+    return DisplayTree(project_dir, stringRep=True).replace('\n', '\n\n')
 
 
 def read_code_file(file_path: str, add_line_numbers: bool=False) -> str:
@@ -24,7 +29,3 @@ def get_codebase(dir_path: str, show_line_numbers: bool=False, allowed_files: li
                 relative_file_path = os.path.relpath(file_path, dir_path)
                 codebase += f'\n\n{relative_file_path}:\n```\n{read_code_file(file_path, add_line_numbers=show_line_numbers)}\n```\n'
     return codebase
-
-
-if __name__ == '__main__':
-    print(get_codebase('./testing/sample_code/', show_line_numbers=True))

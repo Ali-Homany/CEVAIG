@@ -5,7 +5,6 @@ import requests
 import tempfile
 import subprocess
 from io import BytesIO
-from directory_tree import DisplayTree
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -14,13 +13,14 @@ This package is responsible for taking a screenshot of a code file.
 """
 
 
-TEMP_DIR = './temp/'
+TEMP_DIR = os.path.abspath('./temp/')
 # path to preset
 CARBON_PRESET_PATH = os.path.join(os.path.expanduser('~'), '.carbon-now.json')
 SCRIPT_TEMPLATE = """
 @echo off
 REM Run carbon-now non-interactively with preset options on a file
-carbon-now {file_path}"
+cd "{dir_path}"
+carbon-now "{file_name}"
 pause
 """
 
@@ -49,7 +49,12 @@ def get_carbon_script(
     preset['latest-preset']['firstLineNumber'] = starting_line
     with open(CARBON_PRESET_PATH, 'w') as f:
         json.dump(preset, f, indent=4)
-    return SCRIPT_TEMPLATE.format(file_path=file_path)
+    file_path = os.path.abspath(file_path)
+    print(f'Script: {SCRIPT_TEMPLATE.format(dir_path=os.path.dirname(file_path), file_name=os.path.basename(file_path))}')
+    return SCRIPT_TEMPLATE.format(
+        dir_path=os.path.dirname(file_path),
+        file_name=os.path.basename(file_path)
+    )
 
 
 def create_temp_file(content: str, suffix: str) -> str:
@@ -99,7 +104,7 @@ def crop_code_lines(
     """
     num_lines = len(code.split('\n'))
     start = 0
-    end = num_lines
+    end = max_lines
     if num_lines > max_lines and highlight_start:
         num_lines_around = (max_lines - highlight_num_lines) // 2
         if highlight_start <= num_lines_around:
@@ -110,7 +115,7 @@ def crop_code_lines(
         highlight_start -= start
     # crop to start and end
     if end > num_lines:
-        code_lines = code.split('\n')[start:] + ['' for _ in range(end - num_lines)]
+        code_lines = code.split('\n')[start:] + [' ' for _ in range(end - num_lines)]
         code = '\n'.join(code_lines)
     else:
         code = '\n'.join(code.split('\n')[start:end])
@@ -129,7 +134,7 @@ def create_screenshot(
     code, start, highlight_start = crop_code_lines(code, highlight_start, highlight_num_lines, max_lines)
     code = crop_code_columns(code)
     # save code to temporary file
-    file_path = f'{TEMP_DIR}/{file_rel_path}' if file_rel_path else f'{TEMP_DIR}/code'
+    file_path = os.path.join(TEMP_DIR, file_rel_path or 'code.py')
     if not os.path.exists(os.path.dirname(file_path)):
         os.makedirs(os.path.dirname(file_path))
     with open(file_path, 'w') as f:
@@ -145,7 +150,11 @@ def create_screenshot(
     # run script
     subprocess.run(script_path, check=True)
     # load screenshot
-    screenshot_path = max([f for f in os.listdir('./') if f.endswith('.png')], key=os.path.getmtime)
+    screenshot_path = max(
+        [os.path.join(os.path.dirname(file_path), f) for f in os.listdir(os.path.dirname(file_path)) if f.endswith('.png')],
+        key=os.path.getmtime
+    )
+    # screenshot_path = os.path.join(os.path.dirname(file_path), screenshot_path)
     image_output = get_image_from_path(screenshot_path)
     # cleanup, remove temp files
     for file in (screenshot_path, script_path, file_path):
@@ -154,12 +163,13 @@ def create_screenshot(
 
 
 def load_font(font_name: str, font_size: int) -> ImageFont.FreeTypeFont:
+    base_url = 'https://github.com/google/fonts/raw/refs/heads/main/ofl'
     try:
-        font_url = f'https://github.com/google/fonts/raw/refs/heads/main/ofl/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}-Regular.ttf'
+        font_url = f'{base_url}/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}-Regular.ttf'
         response = requests.get(font_url)
         font = ImageFont.truetype(BytesIO(response.content), font_size)
     except Exception as e:
-        font_url = f'https://github.com/google/fonts/raw/refs/heads/main/ofl/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}[wght].ttf'
+        font_url = f'{base_url}/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}[wght].ttf'
         response = requests.get(font_url)
         font = ImageFont.truetype(BytesIO(response.content), font_size)
     return font
@@ -167,10 +177,15 @@ def load_font(font_name: str, font_size: int) -> ImageFont.FreeTypeFont:
 
 def create_project_cover(
     project_title: str,
+    project_subtitle: str,
     width: int=3524,
     height: int=2068,
     font_size: int=300
 ) -> Image.Image:
+    TITLE_MAX_CHARACTERS = 16
+    TITLE_SUBTITLE_RATIO = 2.5
+    project_title = project_title[:TITLE_MAX_CHARACTERS]
+    project_subtitle = project_subtitle[:int(TITLE_MAX_CHARACTERS * TITLE_SUBTITLE_RATIO)]
     # Generate random gradient colors
     start_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
     end_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
@@ -185,24 +200,28 @@ def create_project_cover(
     # load font
     font = load_font('Solway', font_size)
     # get text size to center it
-    text_width, text_height = draw.textbbox((0, 0), project_title, font=font)[2:4]
-    position = ((width - text_width) // 2, (height - text_height) // 2)
+    title_width, title_height = draw.textbbox((0, 0), project_title, font=font)[2:4]
+    position = ((width - title_width) // 2, (height - title_height) // 2)
     # write text
     draw.text(position, project_title, font=font, fill="black")
+    # write subtitle
+    font = load_font('Fira Code', font_size // TITLE_SUBTITLE_RATIO)
+    text_width, text_height = draw.textbbox((0, 0), project_subtitle, font=font)[2:4]
+    position = ((width - text_width) // 2, (height - text_height) // 2 + 100 + title_height)
+    draw.text(position, project_subtitle, font=font, fill="rgb(20, 20, 20)")
     return image
 
 
 def create_project_tree(
     project_title: str,
-    project_dir: str,
+    project_tree: str,
     width: int=3524,
     height: int=2068,
 ) -> Image.Image:
     image = Image.new('RGB', (width, height), color=(0, 0, 0))
     draw = ImageDraw.Draw(image)
-    text = DisplayTree(project_dir, stringRep=True).replace('\n', '\n\n')
     # replace directory with project title
-    text = '\n'.join([project_title] + text.split('\n')[1:])
+    text = '\n'.join([project_title] + project_tree.split('\n')[1:])
     font_size = 1700 // text.count('\n') # magic ratio to make it look good
     font = load_font('Fira Code', font_size)
     # center text
@@ -213,6 +232,9 @@ def create_project_tree(
 
 
 if __name__ == '__main__':
-    file_path = './testing/sample_code'
-    img = create_project_tree('My Project', os.path.abspath(file_path))
+    code = 'print("hello world")\nprint("hello world")\nprint("hello world")'
+    img = create_screenshot(
+        code,
+        file_rel_path='main.py',
+    )
     img.show()

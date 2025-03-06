@@ -3,7 +3,9 @@ import json
 import random
 import asyncio
 import numpy as np
+from PIL import Image
 from explainer import explain_codebase, add_highlighting
+from explainer.codebase_parser import generate_codebase_tree
 from screenshotter import create_project_cover, create_screenshot, create_project_tree
 from tts import SpeechTextConverter, preprocess_text, save_audio_to_file
 from video_utils import (
@@ -12,7 +14,6 @@ from video_utils import (
     concat_video_audio,
     create_image_sequence,
 )
-
 
 temp_dir = f'./temp/test_{random.randint(0, 1000)}/'
 os.path.exists(temp_dir) or os.makedirs(temp_dir)
@@ -40,28 +41,41 @@ def merge_all(audios: list[np.ndarray], images: list[np.ndarray], sr: int) -> Vi
     return final_video
 
 
-async def generate_images(explanations: list[dict], project_title: str, project_dir: str) -> list[np.ndarray]:
+async def generate_images(
+    explanations: list[dict],
+    title: str,
+    subtitle: str,
+    project_dir: str
+) -> list[np.ndarray]:
     images = []
+    cover_image, dir_image = None, None
     for i, item in enumerate(explanations):
         if item['file_path'] == '' or item['file_path'] is None or item['file_path'] == '0':
             img = await asyncio.to_thread(
                 create_project_cover,
-                project_title=project_title
-            )
+                project_title=title, project_subtitle=subtitle
+            ) if not cover_image else cover_image
         elif item['file_path'] == './':
-            img = await asyncio.to_thread(create_project_tree, project_title, project_dir)
+            img = await asyncio.to_thread(
+                create_project_tree,
+                title, generate_codebase_tree(project_dir)
+            ) if not dir_image else dir_image
         else:
-            item['file_path'] = test_dir + item['file_path']
+            item['file_path'] = os.path.join(test_dir, item['file_path'])
             item['code'] = open(item['file_path'], 'r').read()
             if not item['start_line'] or item['start_line'] < 2:
                 item['start_line'] = None
-            img = await asyncio.to_thread(
-                create_screenshot,
-                code=item['code'],
-                file_rel_path=os.path.relpath(item['file_path'], test_dir),
-                highlight_start=item['start_line'],
-                highlight_num_lines=(item['end_line'] - item['start_line'] + 1) if item['start_line'] else None
-            )
+            try:
+                img = await asyncio.to_thread(
+                    create_screenshot,
+                    code=item['code'],
+                    file_rel_path=os.path.relpath(item['file_path'], test_dir),
+                    highlight_start=item['start_line'],
+                    highlight_num_lines=(item['end_line'] - item['start_line'] + 1) if item['start_line'] else None
+                )
+            except Exception as e:
+                print(f'file {item["file_path"]} failed to generate screenshot: {e}')
+                img = Image.new('RGB', (3524, 2068), color=(0, 0, 0))
         images.append(np.array(img))
         img.save(f'{temp_dir}{i}.png')
         print(f'Created screenshot for {i}.png')
@@ -84,11 +98,12 @@ async def generate_audios(explanations: list[dict], tts: SpeechTextConverter) ->
 
 async def main() -> None:
     project_title = input("Enter project title: ")
+    project_subtitle = input("Enter project subtitle: ")
     tts = SpeechTextConverter()
     explanations = get_explanations(project_title)
     # Run image & audio generation concurrently
     images, (audios, sr) = await asyncio.gather(
-        generate_images(explanations, project_title, test_dir),
+        generate_images(explanations, project_title, project_subtitle, test_dir),
         generate_audios(explanations, tts),
     )
     # merge audios & images
