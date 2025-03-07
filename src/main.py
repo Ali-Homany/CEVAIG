@@ -6,14 +6,11 @@ import numpy as np
 from PIL import Image
 from explainer import explain_codebase, add_highlighting
 from explainer.codebase_parser import generate_codebase_tree
-from screenshotter import create_project_cover, create_screenshot, create_project_tree
+from creator.screenshotter import create_screenshot
+from creator.drawer import draw_project_cover, draw_project_tree
 from tts import SpeechTextConverter, preprocess_text, save_audio_to_file
-from video_utils import (
-    VideoClip,
-    merge_audios,
-    concat_video_audio,
-    create_image_sequence,
-)
+from video_utils import merge_all
+
 
 temp_dir = f'./temp/test_{random.randint(0, 1000)}/'
 os.path.exists(temp_dir) or os.makedirs(temp_dir)
@@ -33,14 +30,6 @@ def get_explanations(use_cache: bool=True) -> list[dict]:
     return explanations
 
 
-def merge_all(audios: list[np.ndarray], images: list[np.ndarray], sr: int) -> VideoClip:
-    full_audio = merge_audios(audios, sr=sr, silent_separator=0.5)
-    images_durations = [(audio_np.shape[0] / sr) + 1.5 for audio_np in audios]
-    images_video = create_image_sequence(images, images_durations)
-    final_video = concat_video_audio(video=images_video, audio=full_audio)
-    return final_video
-
-
 async def generate_images(
     explanations: list[dict],
     title: str,
@@ -52,12 +41,12 @@ async def generate_images(
     for i, item in enumerate(explanations):
         if item['file_path'] == '' or item['file_path'] is None or item['file_path'] == '0':
             img = await asyncio.to_thread(
-                create_project_cover,
+                draw_project_cover,
                 project_title=title, project_subtitle=subtitle
             ) if not cover_image else cover_image
         elif item['file_path'] == './':
             img = await asyncio.to_thread(
-                create_project_tree,
+                draw_project_tree,
                 title, generate_codebase_tree(project_dir)
             ) if not dir_image else dir_image
         else:

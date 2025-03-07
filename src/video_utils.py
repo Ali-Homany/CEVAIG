@@ -29,3 +29,11 @@ def create_image_sequence(images: list[np.ndarray], durations: list[float]) -> I
 
 def concat_video_audio(video: VideoClip, audio: AudioClip) -> VideoClip:
     return video.with_audio(audio)
+
+
+def merge_all(audios: list[np.ndarray], images: list[np.ndarray], sr: int) -> VideoClip:
+    full_audio = merge_audios(audios, sr=sr, silent_separator=0.5)
+    images_durations = [(audio_np.shape[0] / sr) + 1.5 for audio_np in audios]
+    images_video = create_image_sequence(images, images_durations)
+    final_video = concat_video_audio(video=images_video, audio=full_audio)
+    return final_video

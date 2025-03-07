@@ -13,16 +13,6 @@ class Gemini:
     def __init__(self, api_key: str) -> None:
         self.client = genai.Client(api_key=api_key, http_options={'api_version': 'v1alpha'})
     def generate(self, prompt: str, response_schema=None) -> Any | str:
-        # if response_schema is not None:
-        #     response = self.client.models.generate_content(
-        #         model='gemini-2.0-flash-thining-exp',
-        #         contents=prompt,
-        #         config={
-        #             'response_mime_type': 'application/json',
-        #             'response_schema': response_schema,
-        #         }
-        #     )
-        #     return response.parsed
         response = self.client.models.generate_content(
             model='gemini-2.0-flash-thinking-exp',
             contents=prompt
