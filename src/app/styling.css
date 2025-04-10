@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Sirin+Stencil&display=swap');
+
+
+:root {
+    --primary: #fff2db;
+    --background: #0d1117;
+    --accent: #0097a6;
+    --accent-hover: #00b0c4;
+    --input-background: #545454
+}
+body {
+    color: var(--primary);
+    background-color: var(--background);
+}
+.stMainBlockContainer {
+    padding-top: unset;
+    padding-bottom: unset;
+}
+.main {
+    background-color: var(--background);
+    padding-top: 1rem;
+    color: var(--primary);
+}
+
+.stApp {
+    background-color: var(--background);
+}
+input {
+    outline: none
+}
+
+/* Headers using Glacial Indifference (fallback to sans-serif) */
+h1, h2, h3 {
+    font-family: 'Glacial Indifference', 'Arial', sans-serif;
+    color: var(--primary);
+}
+
+/* Subtitles and buttons using Brake (fallback to sans-serif) */
+.subtitle, button, .stButton > button {
+    font-family: 'Brake', 'Arial', sans-serif;
+}
+
+/* Regular text using Sirin Stencil */
+p, div, span, label, code {
+    font-family: 'Sirin Stencil', 'Times New Roman', serif;
+    color: var(--primary);
+}
+
+/* Custom styling for buttons */
+.stButton > button {
+    background-color: var(--accent);
+    color: var(--primary);
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+    background-color: var(--accent-hover);
+    box-shadow: 0 4px 8px rgba(0, 151, 166, 0.3);
+}
+
+/* Custom styling for inputs */
+.stTextInput > div > div > input, .stTextArea > div > div > textarea {
+    background-color: var(--input-background);
+    color: var(--primary);
+    border: 1px solid var(--accent);
+    border-radius: 5px;
+}
+
+/* Number inputs styling */
+.stNumberInput > div > div > input {
+    background-color: var(--input-background);
+    color: var(--primary);
+    border: 1px solid var(--accent);
+    border-radius: 5px;
+}
+
+/* Custom styling for sliders */
+.stSlider > div > div > div > div {
+    background-color: var(--accent);
+}
+
+.step-header {
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    font-family: 'Glacial Indifference', 'Arial', sans-serif;
+    color: var(--primary);
+}
+
+.stSlider {
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+
+/* Fixed header with logo */
+.logo-header {
+    position: sticky;
+    top: 0;
+    background-color: var(--background);
+    padding: 10px 0;
+    margin-bottom: 10px;
+    z-index: 999;
+    border-bottom: 1px solid #151b23;
+    text-align: center;
+}
+
+/* Configuration containers */
+.css-1r6slb0, .css-keje6w, .css-1d391kg {
+    background-color: #151b23;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Expander styling */
+.streamlit-expanderHeader {
+    background-color: #151b23;
+    color: var(--primary);
+    border-radius: 5px;
+}
+
+.streamlit-expanderContent {
+    background-color: #151b23;
+    border-radius: 0 0 5px 5px;
+}
+
+/* Progress bar styling */
+.stProgress > div > div > div > div {
+    background-color: var(--accent);
+}
+
+/* File uploader styling */
+.stFileUploader > div > button {
+    background-color: var(--accent);
+    color: var(--primary);
+}
+section[data-testid="stFileUploaderDropzone"] {
+    background-color: var(--input-background);
+}
+
+/* Checkbox styling */
+.stCheckbox > div > label > div {
+    background-color: #151b23;
+}
+
+.stCheckbox > div > label > div[data-baseweb="checkbox"] > span {
+    background-color: var(--accent);
+}
+
+/* Tabs styling */
+.stTabs [data-baseweb="tab-highlight"] {
+    background-color: var(--accent);
+}
+
+/* File type grid */
+.file-type-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.file-type-item {
+    background-color: #151b23;
+    padding: 8px;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--primary);
+}
+
+.file-type-item.selected {
+    background-color: var(--accent);
+    color: var(--primary);
+}
+
+.progress-container {
+    background-color: #151b23;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.explanation-card {
+    background-color: #151b23;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* Container styling */
+.main .block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Override default text colors */
+div.stMarkdown p, div.stMarkdown span {
+    color: var(--primary);
+}
+
+/* Special for the download button in the last step */
+.download-button {
+    background-color: var(--accent);
+    color: var(--primary);
+    padding: 12px 30px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 20px;
+    text-decoration: none;
+    font-family: 'Brake', 'Arial', sans-serif;
+}
+
+/* Line numbers container styling */
+.line-numbers-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
