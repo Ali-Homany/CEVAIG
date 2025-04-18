@@ -41,4 +41,4 @@ def merge_all(audios: list[np.ndarray], images: list[np.ndarray], sr: int) -> Vi
 
 
 def save_video(video: VideoClip, output_path: str) -> None:
-    video.write_videofile(output_path)
+    video.write_videofile(output_path, codec='libx264', audio_codec='aac')

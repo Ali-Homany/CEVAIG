@@ -1,3 +1,5 @@
 [theme]
 primaryColor = "#0097a6"
 backgroundColor = "#0d1117"
+[server]
+watchFileSystem = false

@@ -1,4 +1,3 @@
-import asyncio
 from utils.video_utils import save_video
 from utils.tts import SpeechTextConverter
 from core import (

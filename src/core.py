@@ -91,8 +91,6 @@ async def _generate_audios(
             tts.str_to_audio,
             preprocess_text(item['explanatory_text'])
         )
-        print(audio_np.shape, sr)
-        print(audio_np[0:10])
         audios.append(audio_np)
         save_audio_to_file(audio_np, sr, f'{CACHE_DIR}{i}.mp3')
         print(f'Created audio for {i}.mp3')
