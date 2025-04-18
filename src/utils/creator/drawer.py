@@ -9,21 +9,22 @@ This module is responsible for drawing images using pillow.
 """
 
 
-def request_font(url: str) -> ImageFont.FreeTypeFont:
-    response = requests.get(url)
-    return ImageFont.truetype(BytesIO(response.content), 100)
-
-
 def load_font(font_name: str, font_size: int) -> ImageFont.FreeTypeFont:
     base_url = 'https://github.com/google/fonts/raw/refs/heads/main/ofl'
-    font_url = f'{base_url}/{font_name.lower().replace(" ", "")}/{font_name.title().replace(" ", "")}'
-    try:
-        suffix = '- Regular.ttf'
-        font = requests.get(font_url + suffix)
-    except Exception as e:
-        suffix = '[wght].ttf'
-        font = requests.get(font_url + suffix)
-    return font
+    folder_name = font_name.lower().replace(' ', '')
+    file_name = font_name.replace(' ', '') + '-Regular.ttf'
+    font_url = f'{base_url}/{folder_name}/{file_name}'
+    response = requests.get(font_url)
+    
+    if response.status_code != 200:
+        # try another file name
+        file_name = font_name.replace(' ', '') + '[wght].ttf'
+        font_url = f'{base_url}/{folder_name}/{file_name}'
+        response = requests.get(font_url)
+    if response.status_code == 200:
+        return ImageFont.truetype(BytesIO(response.content), font_size)
+    else:
+        raise ValueError(f"Could not load font: {font_name}")
 
 
 def draw_project_cover(

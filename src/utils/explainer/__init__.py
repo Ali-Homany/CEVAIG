@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from explainer.codebase_parser import get_codebase
-from explainer.llms import Gemini
+from utils.explainer.codebase_parser import get_codebase
+from utils.explainer.llms import Gemini
 
 
 """
@@ -11,6 +11,7 @@ This package is responsible for explaining a code file into json format
 
 
 load_dotenv()
+curr_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class Explanation(BaseModel):
@@ -20,13 +21,13 @@ class Explanation(BaseModel):
     explanatory_text: str
 
 
-def explain_codebase(dir_path: str) -> str:
+def explain_codebase(dir_path: str) -> list[dict]:
     codebase_str = get_codebase(dir_path)
     llm = Gemini(os.getenv('GENAI_API_KEY'))
-    with open('./src/explainer/prompt_explain.txt', 'r') as f:
+    with open(f'{curr_dir}/prompt_explain.txt', 'r') as f:
         prompt = f.read()
     prompt = prompt.format(codebase=codebase_str)
-    explanations = llm.generate(prompt, response_schema=list[Explanation])
+    explanations = llm.generate(prompt)
     # explanations = [explanation.dict() for explanation in explanations]
     return explanations
 
@@ -34,23 +35,8 @@ def explain_codebase(dir_path: str) -> str:
 def add_highlighting(dir_path: str, explanations: list[dict], max_highlight: int=30) -> list[dict]:
     codebase_str = get_codebase(dir_path, show_line_numbers=True)
     llm = Gemini(os.getenv('GENAI_API_KEY'))
-    with open('./src/explainer/prompt_highlight.txt', 'r') as f:
+    with open(f'{curr_dir}/prompt_highlight.txt', 'r') as f:
         prompt = f.read()
     prompt = prompt.format(codebase=codebase_str, explanations=explanations, max_highlight=max_highlight)
-    updated_explanations = llm.generate(prompt, response_schema=list[Explanation])
+    updated_explanations = llm.generate(prompt)
     return updated_explanations
-
-
-if __name__ == '__main__':
-    import json
-    explanations = explain_codebase(
-        './testing/sample_code/'
-    )
-    with open('./temp/explanations.json', 'w') as f:
-        json.dump(explanations, f, indent=4)
-    explanations = add_highlighting(
-        './testing/sample_code/',
-        explanations
-    )
-    with open('./temp/explanations_2.json', 'w') as f:
-        json.dump(explanations, f, indent=4)

@@ -12,7 +12,7 @@ This module is responsible for providing LLM to explain code
 class Gemini:
     def __init__(self, api_key: str) -> None:
         self.client = genai.Client(api_key=api_key, http_options={'api_version': 'v1alpha'})
-    def generate(self, prompt: str, response_schema=None) -> Any | str:
+    def generate(self, prompt: str) -> Any | str:
         response = self.client.models.generate_content(
             model='gemini-2.0-flash-thinking-exp',
             contents=prompt

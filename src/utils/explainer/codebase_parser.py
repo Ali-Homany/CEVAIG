@@ -27,5 +27,6 @@ def get_codebase(dir_path: str, show_line_numbers: bool=False, allowed_files: li
             if file_extension in allowed_files:
                 file_path = os.path.join(root, file)
                 relative_file_path = os.path.relpath(file_path, dir_path)
-                codebase += f'\n\n{relative_file_path}:\n```\n{read_code_file(file_path, add_line_numbers=show_line_numbers)}\n```\n'
+                codebase += f'\n\n{relative_file_path}:\n'
+                codebase += f'```\n{read_code_file(file_path, add_line_numbers=show_line_numbers)}\n```\n'
     return codebase

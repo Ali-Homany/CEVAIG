@@ -24,7 +24,9 @@ class SpeechTextConverter:
         )
         for gs, ps, audio in generator:
             sr = 24000
-            return sr, audio
+            if audio is not None:
+                return sr, audio
+        raise Exception('Audio generation failed')
 
 
 def preprocess_text(text: str) -> str:
@@ -39,3 +41,8 @@ def preprocess_text(text: str) -> str:
 
 def save_audio_to_file(audio_data: np.ndarray, sr: int, file_path: str) -> None:
     sf.write(file_path, audio_data, sr)
+
+
+if __name__ == '__main__':
+    tts = SpeechTextConverter()
+    tts.str_to_audio('hello world')

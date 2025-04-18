@@ -10,7 +10,6 @@ This module is responsible for taking a screenshot of a code file.
 """
 
 
-TEMP_DIR = os.path.abspath('./temp/')
 # path to preset
 CARBON_PRESET_PATH = os.path.join(os.path.expanduser('~'), '.carbon-now.json')
 SCRIPT_TEMPLATE = """
@@ -121,6 +120,7 @@ def crop_code_lines(
 
 def create_screenshot(
     code: str,
+    cache_dir: str,
     file_rel_path: str=None,
     highlight_start: int=None,
     highlight_num_lines: int=1,
@@ -131,7 +131,7 @@ def create_screenshot(
     code, start, highlight_start = crop_code_lines(code, highlight_start, highlight_num_lines, max_lines)
     code = crop_code_columns(code)
     # save code to temporary file
-    file_path = os.path.join(TEMP_DIR, file_rel_path or 'code.py')
+    file_path = os.path.join(cache_dir, file_rel_path or 'code.py')
     if not os.path.exists(os.path.dirname(file_path)):
         os.makedirs(os.path.dirname(file_path))
     with open(file_path, 'w') as f:
