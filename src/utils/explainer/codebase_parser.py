@@ -19,12 +19,38 @@ def read_code_file(file_path: str, add_line_numbers: bool=False) -> str:
     return code
 
 
-def get_codebase(dir_path: str, show_line_numbers: bool=False, allowed_files: list=('py', 'html', 'css', 'md')) -> str:
+def get_codebase(
+    dir_path: str, show_line_numbers: bool=False,
+    ignored_files: list[str]=None
+) -> str:
+    files_ignored_by_default = [
+        'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'bmp',
+        'pyc', 'pyo', 'pyd', 'pyclass', 'pyo',
+        'mp3', 'wav', 'ogg', 'flac', 'mid', 'midi', 'wma',
+        'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv',
+        'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+        'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'tar.gz', 'tgz',
+        'exe', 'msi', 'dll', 'so', 'dylib', 'lib', 'a', 'o', 'log',
+        'pdf', 'csv', 'tsv', 'xml', 'json', 'ipynb'
+    ]
+    folders_to_ignore = [
+        'node_modules', '.git',
+        'venv', '.venv', '__pycache__',
+        '.pytest_cache', '.vscode',
+        'build', 'dist', '.mypy_cache',
+        '.ipynb_checkpoints',
+    ]
+    if not ignored_files:
+        ignored_files = []
+    ignored_files += files_ignored_by_default
     codebase = ''
-    for root, _, files in os.walk(dir_path):
+    for root, folders, files in os.walk(dir_path):
+        for ignored_folder in folders_to_ignore:
+            if ignored_folder in folders:
+                folders.remove(ignored_folder)
         for file in files:
             file_extension = file.split('.')[-1]
-            if file_extension in allowed_files:
+            if file_extension not in ignored_files:
                 file_path = os.path.join(root, file)
                 relative_file_path = os.path.relpath(file_path, dir_path)
                 codebase += f'\n\n{relative_file_path}:\n'

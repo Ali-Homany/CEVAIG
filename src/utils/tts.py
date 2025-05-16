@@ -9,17 +9,18 @@ This package is responsible for converting text to engaging audio using AI.
 
 
 class SpeechTextConverter:
-    def __init__(self):
+    def __init__(self, speed: float=1.0):
         # create pipeline fot english tts
         self.pipeline = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M')
         # set voice
         self.voice = 'af_heart'
+        self.speed = speed
 
     def str_to_audio(self, text: str) -> tuple:
         generator = self.pipeline(
             text,
             voice=self.voice,
-            speed=1,
+            speed=self.speed,
             split_pattern=None
         )
         for gs, ps, audio in generator:

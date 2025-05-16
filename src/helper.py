@@ -37,7 +37,9 @@ def clone_github_repo(repo_url):
     """Clone a github repo into the project directory"""
     try:
         if os.path.exists(PROJECT_DIR):
-            raise Exception(f"The destination path '{PROJECT_DIR}' already exists.")
+            # raise Exception(f"The destination path '{PROJECT_DIR}' already exists.")
+            shutil.rmtree(PROJECT_DIR)
+            print(f"Deleted existing project directory: {PROJECT_DIR}")
         Repo.clone_from(repo_url, PROJECT_DIR)
         return PROJECT_DIR
     except Exception as e:
@@ -59,8 +61,18 @@ def read_logo_image() -> str:
 
 def get_files_types() -> list[str]:
     """Gets unique file types in the given project"""
+    folders_to_ignore = [
+        'node_modules', '.git',
+        'venv', '.venv', '__pycache__',
+        '.pytest_cache', '.vscode',
+        'build', 'dist', '.mypy_cache',
+        '.ipynb_checkpoints',
+    ]
     extensions = set()
-    for root, _, files in os.walk(PROJECT_DIR):
+    for root, folders, files in os.walk(PROJECT_DIR):
+        for ignored_folder in folders_to_ignore:
+            if ignored_folder in folders:
+                folders.remove(ignored_folder)
         for file in files:
             if '.' in file:
                 ext = file.split('.')[-1]

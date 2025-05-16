@@ -29,8 +29,8 @@ st.markdown(f"<style>{get_app_styling()}</style>", unsafe_allow_html=True)
 
 # INITIALIZE TTS
 @st.cache_resource
-def init_tts():
-    return SpeechTextConverter()
+def init_tts(speed: float=1.0):
+    return SpeechTextConverter(speed=speed)
 
 
 # INITIALIZE session state
@@ -39,7 +39,7 @@ if 'step' not in st.session_state:
 if 'ignored_filetypes' not in st.session_state:
     st.session_state.ignored_filetypes = []
 if 'num_explanations' not in st.session_state:
-    st.session_state.num_explanations = 15
+    st.session_state.num_explanations = 20
 if 'voice_speed' not in st.session_state:
     st.session_state.voice_speed = 1.0
 if 'custom_prompt' not in st.session_state:
@@ -94,7 +94,7 @@ def load_and_display_logo():
 # PROGRESS BAR
 def display_progress_bar():
     """Display progress bar based on current step"""
-    total_steps = 7  # Updated from 6 to 7
+    total_steps = 7
     progress = st.session_state.step / total_steps
 
     st.progress(progress)
@@ -121,8 +121,10 @@ display_progress_bar()
 if st.session_state.step == 1:
     with create_step_container():
         st.markdown("<h2 style='text-align: center; font-family: \"Glacial Indifference\", sans-serif; color: #fff2db;'>Generate video tutorials for any coding project in any language</h2>", unsafe_allow_html=True)
-        title = st.text_input("Project Title", key="project_title")
-        subtitle = st.text_input("Project Subtitle", key="project_subtitle")
+        title = st.text_input("Project Title")
+        st.session_state.project_title = title
+        subtitle = st.text_input("Project Subtitle")
+        st.session_state.project_subtitle = subtitle
         if st.button("GET STARTED"):
             if title:
                 go_to_step(2)
@@ -201,7 +203,7 @@ elif st.session_state.step == 4:
                 st.markdown("<h3>Number of Explanations</h3>", unsafe_allow_html=True)
                 num_explanations = st.slider(
                     "", 
-                    min_value=5,
+                    min_value=10,
                     max_value=30,
                     value=st.session_state.num_explanations,
                     step=1
@@ -247,7 +249,11 @@ elif st.session_state.step == 5:
                 go_to_step(4)
         with col2:
             if st.button("Generate Explanations", key="generate_explanations"):
-                st.session_state.explanations = get_explanations()
+                st.session_state.explanations = get_explanations(
+                    num=st.session_state.num_explanations,
+                    ignored_files=st.session_state.ignored_filetypes,
+                    user_instructions=st.session_state.custom_prompt
+                )
                 go_to_step(6)
 
 
@@ -320,8 +326,8 @@ elif st.session_state.step == 7:
             
             if st.button("Generate Video", key="generate_video"):
                 with st.spinner("Generating video..."):
-                    try:
-                        tts = init_tts()
+                    # try:
+                        tts = init_tts(speed=st.session_state.voice_speed)
                         # Call the video generation function
                         video = generate_video(
                             tts,
@@ -337,8 +343,8 @@ elif st.session_state.step == 7:
                         video_file = open(video_path, 'rb')
                         video_bytes = video_file.read()
                         st.session_state.video_bytes = video_bytes
-                    except Exception as e:
-                        st.error(f"Error generating video: {str(e)}")
+                    # except Exception as e:
+                    #     st.error(f"Error generating video: {str(e)}")
             if st.session_state.video_bytes:
                 st.video(st.session_state.video_bytes)
                 st.markdown("</div>", unsafe_allow_html=True)

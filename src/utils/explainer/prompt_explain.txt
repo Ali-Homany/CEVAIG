@@ -8,7 +8,7 @@ You should act as a storyteller walking me through the project as if I were expl
 
 Keep the tone engaging and natural, as if you're guiding me through the project. Don't go into unnecessary details—just introduce each section, explain its role, and move on.
 
-Keep it short and concise in general, never write more than 25 explanations. write only between 10 to 25 depending on the project size and complexity.
+Keep it short and concise in general, never write more than 40 explanations. write only around {num_explanations} explanations depending on the project size and complexity.
 
 Start by explaining the project idea in one explanation, leave file_path empty in this case. Then, don't explain file by file, rather explain depending on the flow of the project and how it works, you might jump from one file to another repeatedly. When you first use a file, explain its general purpose before continuing further details.
 
@@ -19,6 +19,10 @@ Provide a high-level explanation, do not dive into details and you do not have t
 Skip imports and READMEs.
 
 At the end, I should have a clear understanding of the project's workflow without having to read the entire codebase myself.
+
+
+{user_instructions}
+
 
 Here is the codebase:
 {codebase}
