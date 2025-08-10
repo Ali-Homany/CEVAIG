@@ -40,7 +40,7 @@ def clone_github_repo(repo_url):
             # raise Exception(f"The destination path '{PROJECT_DIR}' already exists.")
             shutil.rmtree(PROJECT_DIR)
             print(f"Deleted existing project directory: {PROJECT_DIR}")
-        Repo.clone_from(repo_url, PROJECT_DIR)
+        Repo.clone_from(repo_url, PROJECT_DIR, allow_unsafe_options=True, allow_unsafe_protocols=True)
         return PROJECT_DIR
     except Exception as e:
         raise Exception(f"Failed to clone repository: {e}")

@@ -27,7 +27,7 @@ def explain_codebase(
 ) -> list[dict]:
     codebase_str = get_codebase(dir_path, ignored_files=ignored_files)
     llm = Gemini(os.getenv('GENAI_API_KEY'))
-    with open(f'{curr_dir}/prompt_explain.txt', 'r') as f:
+    with open(f'{curr_dir}/prompt_explain.txt', 'r', encoding='utf-8') as f:
         prompt = f.read()
     user_instructions = 'Few more specific instructions:\n' + user_instructions
     prompt = prompt.format(codebase=codebase_str, num_explanations=num, user_instructions=user_instructions)
@@ -39,10 +39,10 @@ def explain_codebase(
 def add_highlighting(dir_path: str, ignored_files: list[str], explanations: list[dict], max_highlight: int=30) -> list[dict]:
     codebase_str = get_codebase(dir_path, ignored_files=ignored_files, show_line_numbers=True)
     llm = Gemini(os.getenv('GENAI_API_KEY'))
-    with open(f'{curr_dir}/prompt_highlight.txt', 'r') as f:
+    with open(f'{curr_dir}/prompt_highlight.txt', 'r', encoding='utf-8') as f:
         prompt = f.read()
     prompt = prompt.format(codebase=codebase_str, explanations=explanations, max_highlight=max_highlight)
-    with open('prompt_temp.txt', 'w') as f:
+    with open('prompt_temp.txt', 'w', encoding='utf-8') as f:
         f.write(prompt)
     updated_explanations = llm.generate(prompt)
     return updated_explanations
